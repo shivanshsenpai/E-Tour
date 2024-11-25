@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Locations Finder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@latest/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        /* General Page Styling */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #00e5ff, #7f00ff); /* Gradient background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+            background-image: url(static/images/drb.jpg);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        header {
+            background-color: #00bcd4;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-image: url(static/images/drb.jpg);
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar {
+            list-style: none;
+            display: flex;
+            gap: 15px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar li {
+            display: inline;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 10px 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            background-color: #008c9e;
+            border-radius: 5px;
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+        }
+
+        .radius-control {
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #00bcd4;
+            border-radius: 5px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #0097a7;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #74b72e;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #a020f0;
+        }
+
+        #map {
+            height: 500px;
+            width: 97%;
+            margin: 10px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px 0;
+            background-color: #00bcd4;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 0.9rem;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+            background-image: url(static/images/drb.jpg);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">Nearby Quest</div>
+        <ul class="navbar">
+            <li><a href="{% url 'contact' %}">Contact</a></li>
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'about' %}">About</a></li>
+        </ul>
+    </header>
+
+    <div class="radius-control">
+        <label for="radiusInput">Set Radius (30-150 km):</label>
+        <input type="number" id="radiusInput" min="30" max="150" value="50" />
+        <button id="fetchLocationsButton">Find Locations</button>
+    </div>
+
+    <div id="map"></div>
+
+    <footer>&copy; 2024 Nearby Locations Finder. All rights reserved.</footer>
+
+    <script src="https://unpkg.com/leaflet@latest/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script>
+        const map = L.map('map').setView([20.5937, 78.9629], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let userMarker, routingControl;
+
+        const getMarkerColor = (tags) => {
+            if (tags.amenity === "cafe") return 'orange';
+            if (tags.amenity === "restaurant") return 'red';
+            if (tags.tourism === "hotel") return 'blue';
+            if (tags.tourism === "attraction") return 'purple';
+            if (tags.tourism === "motel") return 'cyan';
+            if (tags.leisure === "park") return 'green';
+            return 'gray';
+        };
+
+        const createMarker = (color) => L.circleMarker([0, 0], {
+            radius: 10, fillColor: color, color, weight: 1, opacity: 1, fillOpacity: 0.8
+        });
+
+        const fetchLocations = async (lat, lng, radius) => {
+            const query = `
+                [out:json];(
+                    node["amenity"="cafe"](around:${radius * 1000},${lat},${lng});
+                    node["amenity"="restaurant"](around:${radius * 1000},${lat},${lng});
+                    node["tourism"="hotel"](around:${radius * 1000},${lat},${lng});
+                    node["tourism"="attraction"](around:${radius * 1000},${lat},${lng});
+                    node["leisure"="park"](around:${radius * 1000},${lat},${lng});
+                    node["tourism"="motel"](around:${radius * 1000},${lat},${lng});
+                );out;`;
+
+            const url = `https://api.allorigins.win/raw?url=` + 
+                        encodeURIComponent(`http://overpass-api.de/api/interpreter?data=${query}`);
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                map.eachLayer(layer => {
+                    if (layer instanceof L.Marker || layer instanceof L.CircleMarker) map.removeLayer(layer);
+                });
+
+                data.elements.forEach(location => {
+                    if (location.lat && location.lon) {
+                        const color = getMarkerColor(location.tags);
+                        const marker = createMarker(color)
+                            .setLatLng([location.lat, location.lon])
+                            .addTo(map)
+                            .bindPopup(location.tags.name || "Unknown Location")
+                            .on('click', () => showRoute(userMarker.getLatLng(), marker.getLatLng()));
+                    }
+                });
+
+                if (data.elements.length === 0) {
+                    alert("No locations found in this radius.");
+                }
+            } catch (error) {
+                console.error('Error fetching locations:', error);
+                alert("Failed to load locations. Please try again later.");
+            }
+        };
+
+        const showRoute = (start, end) => {
+            if (routingControl) map.removeControl(routingControl);
+            routingControl = L.Routing.control({
+                waypoints: [start, end], routeWhileDragging: true
+            }).addTo(map);
+        };
+
+        document.getElementById('fetchLocationsButton').addEventListener('click', () => {
+            const radius = Math.max(30, Math.min(document.getElementById('radiusInput').value, 150));
+            getUserLocationAndFetch(radius);
+        });
+
+        const getUserLocationAndFetch = (radius) => {
+            navigator.geolocation.getCurrentPosition(position => {
+                const { latitude: lat, longitude: lng } = position.coords;
+                map.setView([lat, lng], 13);
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.marker([lat, lng]).addTo(map).bindPopup("You are here").openPopup();
+                fetchLocations(lat, lng, radius);
+            }, () => {
+                alert('Could not get your location. Please enable location services.');
+            });
+        };
+
+        getUserLocationAndFetch(50);
+    </script>
+</body>
+</html>

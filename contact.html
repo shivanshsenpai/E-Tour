@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'CssFiles/cssc.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Contact Us</h1>
+        <p>We would love to hear from you! Please fill out the form below, or reach us at:</p>
+
+        <div class="contact-info">
+            <h3>Contact Information</h3>
+            <p><strong>Email:</strong> <a href="mailto:info@example.com">info@example.com</a></p>
+            <p><strong>Phone:</strong> (123) 456-7890</p>
+            <p><strong>Address:</strong> 123 Example Street, City, State, ZIP</p>
+        </div>
+
+        <form method="post" class="contact-form">
+            {% csrf_token %}
+            <h2>General Inquiry</h2>
+            {% if contact_form.errors %}
+                <div class="error">
+                    <strong>Please correct the following errors:</strong>
+                    <ul>
+                        {% for field in contact_form %}
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in contact_form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {{ contact_form.as_p }}
+
+            <button type="submit">Submit</button>
+        </form>
+
+        <section id="complaint-section">
+            <h2>Write a Complaint</h2>
+            <form method="post" action="{% url 'submit_complaint' %}">
+                {% csrf_token %}
+                {% if complaint_form.errors %}
+                    <div class="error">
+                        <strong>Please correct the following errors:</strong>
+                        <ul>
+                            {% for field in complaint_form %}
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in complaint_form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {{ complaint_form.as_p }}
+                <button type="submit">Submit Complaint</button>
+            </form>
+        </section>
+    </div>
+</body>
+</html>

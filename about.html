@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Travel Tour Guide - Conclusion</title>
+    {% load static %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 1000px;
+            width: 90%;
+        }
+        .text-section {
+            padding: 20px;
+            flex: 1;
+        }
+        .text-section h1 {
+            font-size: 2em;
+            color: #333;
+        }
+        .text-section p {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+        }
+        .image-section {
+            flex: 1;
+            padding: 20px; /* Optional padding for better spacing */
+            display: flex;
+            justify-content: center; /* Center the image horizontally */
+            align-items: center; /* Center the image vertically */
+        }
+        .image-section img {
+            max-width: 100%; /* Ensure it scales with the container */
+            height: auto; /* Maintain aspect ratio */
+            border-radius: 10px; /* Rounded corners for the image */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-section">
+            <h1>Conclusion</h1>
+            <p>At E Tour Guide, we believe that travel is not just about visiting places, it's about creating unforgettable experiences. Founded in 2024, our mission has always been to make travel easier, more accessible, and deeply enriching. What started as a small idea to help travelers navigate their nearby iconic locations to experience thrilling adventures.</p>
+            <p><strong>Unlock Your Next Adventure - Where Will the Journey Take You?</strong></p>
+        </div>
+        
+        <div class="image-section">
+            <img src="{% static 'images/ABOUT.jpg' %}" alt="Traveler using E-Travel Guide in the city">
+
+        </div>
+    </div>
+</body>
+</html>
